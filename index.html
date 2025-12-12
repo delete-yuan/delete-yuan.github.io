@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智慧文旅 · 景区游客引导系统</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+    }
+    header {
+      background: #2c3e50;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      letter-spacing: 1px;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      background: #34495e;
+      padding: 10px;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 16px;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .section-title {
+      font-size: 22px;
+      margin: 20px 0 10px;
+      padding-left: 8px;
+      border-left: 4px solid #3498db;
+    }
+    /* --- 智能地图区域样式 --- */
+    #map {
+      width: 100%;
+      height: 500px;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 景点卡片布局 */
+    .spot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .spot-card {
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .spot-card img {
+      width: 100%;
+      border-radius: 8px;
+      height: 150px;
+      object-fit: cover;
+    }
+    .spot-name {
+      font-size: 18px;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .spot-desc {
+      font-size: 14px;
+      color: #666;
+      margin-top: 6px;
+    }
+    .dropdown {
+      position: relative;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background: #2c3e50;
+      padding: 10px;
+      border-radius: 8px;
+      min-width: 150px;
+      z-index: 1000;
+    }
+    .dropdown-content a {
+      display: block;
+      padding: 5px 10px;
+      color: #fff;
+    }
+    .dropdown-content a:hover {
+      background: #3f5870;
+    }
+    .dropdown-btn {
+      cursor: pointer;
+    }
+    
+    /* 自定义定位按钮样式 */
+    .custom-location-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .custom-location-btn:hover {
+      background: #f0f0f0;
+    }
+    
+    /* 位置状态指示器 */
+    .location-status {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+  </style>
+
+  <!-- 百度地图API -->
+  <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=xugGrl3zF7kYGvgoY3Cs90lkhCvKb8I4"></script>
+</head>
+<body>
+
+<header>智慧文旅 · 老龙头景区游客引导系统</header>
+
+<nav>
+  <div class="dropdown">
+    <a href="#intro" class="dropdown-btn">景区介绍 ▾</a>
+    <div class="dropdown-content">
+      <a href="#intro-intro">景区概况</a>
+      <a href="#intro-history">历史沿革</a>
+      <a href="#intro-service">特色亮点</a>
+      <a href="#intro-price">开放时间与票价</a>
+      <a href="#intro-basic">基础设施与服务</a>
+      <a href="#intro-tips">旅游贴士</a>
+    </div>
+  </div>
+  <a href="#map-section">智能地图</a>
+  <a href="#spots">景点介绍</a>
+</nav>
+
+<div class="container">
+
+  <!-- ================= 景区介绍 ================= -->
+  <section id="intro">
+    <h2 class="section-title">景区介绍</h2>
+    <pre>
+
+<section id="intro-intro">
+  <h2 class="dropdown-btn">景区概况</h2>
+
+山海关老龙头位于秦皇岛市山海关区南侧渤海之滨，距离山海关城约4公里，是明长城唯一的入海处，素有"海上长城"之誉。作为明代重要的海陆军事要塞，景区集关、山、海景观于一体，包括入海石城、海神庙、澄海楼、宁海城、靖卤台、南海口及滨海长城等七大部分。这里不仅是万里长城的东部起点，还拥有长城历史上第一座观海楼阁——澄海楼，景观壮丽，文化底蕴深厚。老龙头以其独特的长城入海奇观、深厚的历史积淀与完整的海防体系，被评为国家AAAA级旅游景区。
+
+
+<section id="intro-history">
+  <h2 class="dropdown-btn">历史沿革</h2>
+
+· 明代初期（1381年）：大将军徐达在此修筑长城，设立海防要塞，老龙头成为山海卫（山海关）的延伸部分。
+· 明代中后期：戚继光、孙承宗等名将多次加固修缮，增建入海石城、澄海楼等，形成完整的海防体系。
+· 清代至近代：老龙头既是军事要地，也成为帝王将相登临观海的胜地，康熙、乾隆等皇帝曾到此巡游。1900年八国联军侵华时，老龙头遭炮火严重损毁。
+· 现代修复：1984年起，国家对其进行了大规模修复，重建了澄海楼、入海石城等建筑，基本恢复了明清风貌。
+
+
+<section id="intro-service">
+  <h2 class="dropdown-btn">特色亮点</h2>
+
+1. 长城入海奇观
+      老龙头伸入渤海的石城犹如巨龙饮水，海浪拍打城墙的景象震撼壮观，是长城文化与海洋景观的完美结合。
+2. 澄海楼
+      被称为"长城第一楼"，历史上多次重建。登楼可俯瞰渤海，远眺山海关全景，楼内留有历代文人武将的诗文匾额。
+3. 海神庙与天后宫
+      融合了古代航海信仰与民俗文化，展现了中国沿海地区祭祀海神的传统。
+4. 军事防御体系遗址
+      包括明代军营（龙武营）、城墙敌台、铁炮等实物，生动再现古代海防布局。
+5. 爱国主义教育展馆
+      通过史料展示近代抗击外敌的历史，如八国联军入侵等事件。
+
+
+<section id="intro-price">
+  <h2 class="dropdown-btn">开放时间与票价</h2>
+
+· 旺季（5月-10月）：7:30-18:00
+· 淡季（11月-次年4月）：8:00-17:30
+· 门票参考：约50元（旺季可能调整，建议查询官网或旅游平台最新信息）。
+
+
+<section id="intro-basic">
+  <h2 class="dropdown-btn">基础设施与服务</h2>
+
+1. 交通便利
+   · 秦皇岛火车站乘公交25路、35路可直达。
+   · 景区周边设有停车场，适合自驾游。
+2. 导览服务
+   · 提供语音导览、讲解员服务及清晰的指示牌。
+3. 便民设施
+   · 游客中心、纪念品商店、餐饮区（可品尝当地海鲜、饽椤饼等小吃）。
+   · 无障碍通道覆盖主要区域，适合老年及残障游客。
+4. 周边联动
+   · 可与山海关古城、天下第一关、孟姜女庙等景点串联游览。
+
+
+<section id="intro-tips">
+  <h2 class="dropdown-btn">旅游贴士</h2>
+
+· 最佳游览季节为春夏季，可同时享受海滨风光。
+· 建议预留2-3小时游览，登澄海楼观日出或日落尤为推荐。
+· 景区内海风较大，需注意防风保暖。
+    </pre>
+  </section>
+
+  <!-- ================= 智能地图 ================= -->
+  <section id="map-section">
+    <h2 class="section-title">智能地图（实时定位）</h2>
+    <div id="map"></div>
+  </section>
+
+  <!-- ================= 景点介绍 ================= -->
+  <section id="spots">
+    <h2 class="section-title">景点介绍</h2>
+    <div class="spot-grid">
+
+      <div class="spot-card">
+        <img src="https://raw.githubusercontent.com/delete-yuan/delete-yuan.github.io/main/867896311030ecf61ffbfad2ea385cd5.jpg" alt="澄海楼" />
+        <div class="spot-name">澄海楼</div>
+        <div class="spot-desc">澄海楼，这座位于山海关老龙头长城尽头的城楼，明末筑起，是万里长城东端的第一个城楼，同时也是老龙头景区的璀璨明珠。这座楼肩上担负着历史的厚重，悬挂在楼上的"雄襟万里"匾额，正是明代大学士孙承宗的亲笔题字。时光荏苒，历史的长河中，澄海楼历经风雨，但始终屹立不倒。现存的是经过1985年至1987年的修复后的建筑，二层的大木结构，重檐九脊歇山瓦顶，高14.5米，面宽15.68米，进深12米。这座楼分两层，砖木结构，歇山重檐瓦顶。登上澄海楼，你会被一块匾额所吸引——"雄襟万里"。这是明代大学士孙承宗所题，笔力千钧，寓意深远。而另一块匾额"元气混茫"，以及一副楹联"日光用华从太始，天容海色本澄清"，都是清代乾隆皇帝御笔亲题，字体苍劲有力，犹如龙飞凤舞。</div>
+      </div>
+
+      <div class="spot-card">
+        <img src="https://raw.githubusercontent.com/delete-yuan/delete-yuan.github.io/main/b.png" alt="宁海城" />
+        <div class="spot-name">宁海城</div>
+        <div class="spot-desc">宁海城，位于秦皇岛市山海关区龙海大道1号老龙头景区内澄海楼后。宁海城在入海石城北，这座城池是山海关老龙头军事防御体系的重要组成部分，见证了中国古代的战争历史，是我国现存较完整、规模较宏大的明代军营。梯形总长约899米。其右建有"把总署"，其左建有"龙武营"房。还有祭祀先驱将领的显功祠，和请神仙护佑的龙王庙和关帝庙。</div>
+      </div>
+
+      <div class="spot-card">
+        <img src="https://raw.githubusercontent.com/delete-yuan/delete-yuan.github.io/main/ting.jpg" alt="乾隆御碑亭" />
+        <div class="spot-name">乾隆御碑亭</div>
+        <div class="spot-desc">乾隆御碑亭，乃清代乾隆十九年山海关知县钟和梅所建，为重檐四角亭，气韵独特。曾四次莅临老龙头的乾隆帝，登楼赋诗，御碑所刻的乾隆题诗是乾隆八年到十九年所题的三首长诗，如明珠般镶嵌于亭中，熠熠生辉。</div>
+      </div>
+  
+      <div class="spot-card">
+        <img src="https://raw.githubusercontent.com/delete-yuan/delete-yuan.github.io/main/a.png" alt="守备署" />
+        <div class="spot-name">守备署</div>
+        <div class="spot-desc">老龙头守备署建于明朝，是明代万里长城"首关"山海关的军事指挥核心之一。守备署内部布局严谨，包括军营、办公厅、兵器库及民防设施。守备署的建立反映了明代沿海防御体系的完善，以及当时北方关隘防务的重要性。</div>
+      </div>
+
+      <div class="spot-card">
+        <img src="https://raw.githubusercontent.com/delete-yuan/delete-yuan.github.io/main/646b613a9e88b1205194d86b39dac11c.jpg" alt="八卦阵" />
+        <div class="spot-name">八卦阵</div>
+        <div class="spot-desc">八卦阵位于山海关老龙头景区的中心区域，是依据《周易》八卦原理布设的迷阵景点。阵内道路环绕交织，步移景异，体验"入阵如迷、出阵如悟"的趣味。适合游客在游览中体验中国古代兵家布阵智慧。</div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ================= 百度地图初始化 =================
+// 创建地图实例
+var map = new BMap.Map("map");
+
+// 老龙头景区坐标（可以根据需要调整）
+var point = new BMap.Point(119.805, 39.978);
+map.centerAndZoom(point, 15);
+
+// 添加基本控件
+map.addControl(new BMap.NavigationControl());
+map.addControl(new BMap.ScaleControl());
+
+// ================= 实时定位功能 =================
+// 存储当前用户标记
+var userMarker = null;
+var watchPositionId = null;
+
+// 更新用户位置状态显示
+function updateLocationStatus(text, isError = false) {
+  let statusEl = document.getElementById('location-status');
+  if (!statusEl) {
+    statusEl = document.createElement('div');
+    statusEl.id = 'location-status';
+    statusEl.className = 'location-status';
+    document.getElementById('map').appendChild(statusEl);
+  }
+  
+  statusEl.textContent = text;
+  statusEl.style.color = isError ? '#e74c3c' : '#27ae60';
+  statusEl.style.backgroundColor = isError ? 'rgba(231, 76, 60, 0.1)' : 'rgba(39, 174, 96, 0.1)';
+}
+
+// 更新用户位置标记
+function updateUserPosition(lng, lat, accuracy) {
+  // 将GPS坐标转换为百度坐标（百度地图API会自动处理，但为了精确可以调用转换接口）
+  var point = new BMap.Point(lng, lat);
+  
+  // 移除旧的标记
+  if (userMarker) {
+    map.removeOverlay(userMarker);
+  }
+  
+  // 创建新标记 - 使用自定义图标
+  userMarker = new BMap.Marker(point);
+  
+  // 设置标记图标（使用百度默认蓝色图标）
+  var icon = new BMap.Icon(
+    'http://api.map.baidu.com/img/markers.png',
+    new BMap.Size(23, 25),
+    {
+      offset: new BMap.Size(10, 25),
+      imageOffset: new BMap.Size(0, 0) // 使用蓝色图标
+    }
+  );
+  userMarker.setIcon(icon);
+  
+  // 添加标记到地图
+  map.addOverlay(userMarker);
+  
+  // 创建信息窗口
+  var infoWindow = new BMap.InfoWindow(
+    `<div style="font-size:14px;padding:5px;">
+      <strong>您的位置</strong><br>
+      经度: ${lng.toFixed(6)}<br>
+      纬度: ${lat.toFixed(6)}<br>
+      ${accuracy ? `精度: ±${accuracy.toFixed(1)}米` : ''}
+    </div>`
+  );
+  
+  // 点击标记显示信息窗口
+  userMarker.addEventListener("click", function() {
+    this.openInfoWindow(infoWindow);
+  });
+  
+  // 更新状态显示
+  updateLocationStatus(`定位成功 - 精度: ±${accuracy ? accuracy.toFixed(1) : '未知'}米`);
+  
+  // 将地图中心移动到当前位置（第一次定位时）
+  if (!window.initialPositionSet) {
+    map.panTo(point);
+    map.setZoom(17); // 放大地图
+    window.initialPositionSet = true;
+  }
+  
+  console.log("位置更新：纬度=" + lat + ", 经度=" + lng);
+}
+
+// 开始持续定位
+function startContinuousLocation() {
+  if (!navigator.geolocation) {
+    updateLocationStatus("浏览器不支持地理定位功能", true);
+    alert("您的浏览器不支持地理定位功能");
+    return;
+  }
+  
+  updateLocationStatus("正在获取位置...");
+  
+  // 首次获取位置
+  navigator.geolocation.getCurrentPosition(
+    function(position) {
+      var lat = position.coords.latitude;
+      var lng = position.coords.longitude;
+      var accuracy = position.coords.accuracy;
+      
+      // 将GPS坐标转换为百度坐标
+      var convertor = new BMap.Convertor();
+      var pointArr = [new BMap.Point(lng, lat)];
+      
+      convertor.translate(pointArr, 1, 5, function(data) {
+        if (data.status === 0) {
+          var point = data.points[0];
+          updateUserPosition(point.lng, point.lat, accuracy);
+        } else {
+          // 转换失败，使用原始坐标
+          updateUserPosition(lng, lat, accuracy);
+        }
+      });
+    },
+    function(error) {
+      var errorMessage = "获取位置失败: ";
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage += "用户拒绝了定位请求";
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage += "位置信息不可用";
+          break;
+        case error.TIMEOUT:
+          errorMessage += "请求超时";
+          break;
+        default:
+          errorMessage += "未知错误";
+      }
+      updateLocationStatus(errorMessage, true);
+      console.warn(errorMessage, error);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
+  
+  // 持续监听位置变化（每10秒更新一次）
+  watchPositionId = navigator.geolocation.watchPosition(
+    function(position) {
+      var lat = position.coords.latitude;
+      var lng = position.coords.longitude;
+      var accuracy = position.coords.accuracy;
+      
+      // 将GPS坐标转换为百度坐标
+      var convertor = new BMap.Convertor();
+      var pointArr = [new BMap.Point(lng, lat)];
+      
+      convertor.translate(pointArr, 1, 5, function(data) {
+        if (data.status === 0) {
+          var point = data.points[0];
+          updateUserPosition(point.lng, point.lat, accuracy);
+        } else {
+          // 转换失败，使用原始坐标
+          updateUserPosition(lng, lat, accuracy);
+        }
+      });
+    },
+    function(error) {
+      console.warn("持续定位失败:", error);
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 10000,  // 10秒内不重复使用缓存
+      timeout: 10000
+    }
+  );
+}
+
+// 手动重新定位函数
+function reLocate() {
+  updateLocationStatus("重新定位中...");
+  
+  if (watchPositionId !== null) {
+    navigator.geolocation.clearWatch(watchPositionId);
+  }
+  
+  if (userMarker) {
+    map.removeOverlay(userMarker);
+    userMarker = null;
+  }
+  
+  window.initialPositionSet = false;
+  
+  // 延迟一点开始定位，确保状态显示更新
+  setTimeout(startContinuousLocation, 500);
+}
+
+// 添加自定义定位按钮
+function addCustomLocationButton() {
+  var locationBtn = document.createElement('button');
+  locationBtn.className = 'custom-location-btn';
+  locationBtn.innerHTML = '📍';
+  locationBtn.title = '重新定位到我的位置';
+  locationBtn.onclick = reLocate;
+  
+  document.getElementById('map').appendChild(locationBtn);
+}
+
+// 页面加载完成后初始化
+window.addEventListener('load', function() {
+  // 添加自定义定位按钮
+  addCustomLocationButton();
+  
+  // 延迟一点开始定位，确保地图已加载
+  setTimeout(startContinuousLocation, 1000);
+});
+
+// 页面卸载时清理
+window.addEventListener('beforeunload', function() {
+  if (watchPositionId !== null) {
+    navigator.geolocation.clearWatch(watchPositionId);
+  }
+});
+</script>
+
+<script>
+// 下拉菜单展开/隐藏
+const dropdowns = document.querySelectorAll('.dropdown');
+
+dropdowns.forEach(dropdown => {
+  const btn = dropdown.querySelector('.dropdown-btn');
+  const menu = dropdown.querySelector('.dropdown-content');
+  
+  if (btn && menu) {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // 关闭其他下拉菜单
+      document.querySelectorAll('.dropdown-content').forEach(otherMenu => {
+        if (otherMenu !== menu) {
+          otherMenu.style.display = 'none';
+        }
+      });
+      // 切换当前菜单
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    });
+  }
+});
+
+// 点击其他地方关闭下拉菜单
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.dropdown')) {
+    document.querySelectorAll('.dropdown-content').forEach(menu => {
+      menu.style.display = 'none';
+    });
+  }
+});
+</script>
+
+</body>
+</html>
+
