@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>智慧文旅 · 老龙头景区游客引导系统</title>
+
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --text-color: #333;
+      --light-bg: #f5f5f5;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--light-bg);
+      color: var(--text-color);
+      line-height: 1.5;
+      font-size: 16px;
+    }
+    
+    header {
+      background: var(--primary-color);
+      color: #fff;
+      padding: 15px 10px;
+      text-align: center;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    /* 导航栏 - 手机优化 */
+    nav {
+      display: flex;
+      justify-content: center;
+      background: #34495e;
+      padding: 0;
+      position: sticky;
+      top: 58px; /* 根据header高度调整 */
+      z-index: 999;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    nav::-webkit-scrollbar {
+      display: none;
+    }
+    
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 12px 15px;
+      display: inline-block;
+      flex-shrink: 0;
+      transition: background-color 0.3s;
+    }
+    
+    nav a:hover, nav a.active {
+      background: #3f5870;
+    }
+    
+    /* 下拉菜单优化 */
+    .dropdown {
+      position: relative;
+    }
+    
+    .dropdown-btn {
+      display: inline-block;
+      padding: 12px 15px;
+      cursor: pointer;
+      color: #fff;
+      font-size: 0.9rem;
+      background: none;
+      border: none;
+      font-family: inherit;
+    }
+    
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: var(--primary-color);
+      padding: 10px 0;
+      border-radius: 0 0 8px 8px;
+      min-width: 180px;
+      z-index: 1001;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+    
+    .dropdown-content a {
+      display: block;
+      padding: 10px 15px;
+      color: #fff;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+    
+    .dropdown-content a:hover {
+      background: #3f5870;
+    }
+    
+    .container {
+      padding: 15px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .section-title {
+      font-size: 1.3rem;
+      margin: 25px 0 15px;
+      padding-left: 10px;
+      border-left: 4px solid var(--secondary-color);
+      color: var(--primary-color);
+    }
+    
+    /* 智能地图区域样式 */
+    #map {
+      width: 100%;
+      height: 400px;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 20px;
+    }
+    
+    /* 景点卡片布局 - 响应式 */
+    .spot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .spot-card {
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      transition: transform 0.3s, box-shadow 0.3s;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .spot-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+    }
+    
+    .spot-card img {
+      width: 100%;
+      border-radius: 8px;
+      height: 180px;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+    
+    .spot-name {
+      font-size: 1.1rem;
+      margin: 10px 0 5px;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+    
+    .spot-desc {
+      font-size: 0.95rem;
+      color: #666;
+      line-height: 1.6;
+      flex-grow: 1;
+    }
+    
+    /* 景区介绍部分 */
+    .intro-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      margin-bottom: 30px;
+    }
+    
+    .intro-section {
+      margin-bottom: 25px;
+      padding-bottom: 25px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .intro-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .intro-section h3 {
+      font-size: 1.1rem;
+      margin: 0 0 12px 0;
+      color: var(--primary-color);
+      padding-left: 8px;
+      border-left: 3px solid var(--secondary-color);
+    }
+    
+    .intro-section p, .intro-section ul, .intro-section ol {
+      margin: 0 0 10px 0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    
+    .intro-section ul, .intro-section ol {
+      padding-left: 20px;
+    }
+    
+    .intro-section li {
+      margin-bottom: 5px;
+    }
+    
+    /* 定位按钮样式 */
+    .custom-location-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 1000;
+      background: white;
+      border: none;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      touch-action: manipulation;
+    }
+    
+    .custom-location-btn:active {
+      transform: scale(0.95);
+      background: #f0f0f0;
+    }
+    
+    .location-status {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      max-width: calc(100% - 80px);
+      backdrop-filter: blur(5px);
+    }
+    
+    /* 返回顶部按钮 */
+    .back-to-top {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 45px;
+      height: 45px;
+      background: var(--secondary-color);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      transition: all 0.3s;
+    }
+    
+    .back-to-top:hover {
+      background: #2980b9;
+      transform: translateY(-3px);
+    }
+    
+    /* 页脚 */
+    footer {
+      background: var(--primary-color);
+      color: #fff;
+      text-align: center;
+      padding: 20px 15px;
+      margin-top: 40px;
+      font-size: 0.9rem;
+    }
+    
+    footer p {
+      margin: 5px 0;
+      opacity: 0.8;
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      header {
+        font-size: 1rem;
+        padding: 12px 10px;
+      }
+      
+      nav {
+        top: 46px; /* 调整header高度 */
+        justify-content: flex-start;
+        padding: 0 10px;
+      }
+      
+      nav a, .dropdown-btn {
+        padding: 12px 10px;
+        font-size: 0.85rem;
+      }
+      
+      .container {
+        padding: 12px;
+      }
+      
+      .section-title {
+        font-size: 1.2rem;
+        margin: 20px 0 12px;
+      }
+      
+      #map {
+        height: 350px;
+      }
+      
+      .spot-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+      
+      .spot-card {
+        padding: 15px;
+      }
+      
+      .spot-card img {
+        height: 160px;
+      }
+      
+      .spot-name {
+        font-size: 1.05rem;
+      }
+      
+      .spot-desc {
+        font-size: 0.9rem;
+      }
+      
+      .intro-content {
+        padding: 15px;
+      }
+      
+      .intro-section h3 {
+        font-size: 1.05rem;
+      }
+      
+      .intro-section p, .intro-section ul, .intro-section ol {
+        font-size: 0.9rem;
+      }
+      
+      .custom-location-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        top: 10px;
+        right: 10px;
+      }
+      
+      .location-status {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+        top: 10px;
+        left: 10px;
+      }
+      
+      .back-to-top {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+        bottom: 15px;
+        right: 15px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      header {
+        font-size: 0.95rem;
+        padding: 10px 8px;
+      }
+      
+      nav {
+        top: 42px;
+      }
+      
+      nav a, .dropdown-btn {
+        padding: 10px 8px;
+        font-size: 0.8rem;
+      }
+      
+      #map {
+        height: 300px;
+      }
+      
+      .spot-card img {
+        height: 140px;
+      }
+      
+      .intro-content {
+        padding: 12px;
+      }
+    }
+    
+    /* 加载动画 */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 5px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <!-- 百度地图API -->
+  <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=xugGrl3zF7kYGvgoY3Cs90lkhCvKb8I4"></script>
+</head>
+<body>
+
+<header>智慧文旅 · 老龙头景区游客引导系统</header>
+
+<nav>
+  <div class="dropdown">
+    <button class="dropdown-btn">景区介绍 ▾</button>
+    <div class="dropdown-content">
+      <a href="#intro-intro">景区概况</a>
+      <a href="#intro-history">历史沿革</a>
+      <a href="#intro-service">特色亮点</a>
+      <a href="#intro-price">开放时间与票价</a>
+      <a href="#intro-basic">基础设施与服务</a>
+      <a href="#intro-tips">旅游贴士</a>
+    </div>
+  </div>
+  <a href="#map-section">智能地图</a>
+  <a href="#spots">景点介绍</a>
+</nav>
+
+<div class="container">
+
+  <!-- ================= 景区介绍 ================= -->
+  <section id="intro">
+    <h2 class="section-title">景区介绍</h2>
+    <div class="intro-content">
+      
+      <div class="intro-section" id="intro-intro">
+        <h3>景区概况</h3>
+        <p>山海关老龙头位于秦皇岛市山海关区南侧渤海之滨，距离山海关城约4公里，是明长城唯一的入海处，素有"海上长城"之誉。作为明代重要的海陆军事要塞，景区集关、山、海景观于一体，包括入海石城、海神庙、澄海楼、宁海城、靖卤台、南海口及滨海长城等七大部分。这里不仅是万里长城的东部起点，还拥有长城历史上第一座观海楼阁——澄海楼，景观壮丽，文化底蕴深厚。老龙头以其独特的长城入海奇观、深厚的历史积淀与完整的海防体系，被评为国家AAAA级旅游景区。</p>
+      </div>
+      
+      <div class="intro-section" id="intro-history">
+        <h3>历史沿革</h3>
+        <ul>
+          <li><strong>明代初期（1381年）</strong>：大将军徐达在此修筑长城，设立海防要塞，老龙头成为山海卫（山海关）的延伸部分。</li>
+          <li><strong>明代中后期</strong>：戚继光、孙承宗等名将多次加固修缮，增建入海石城、澄海楼等，形成完整的海防体系。</li>
+          <li><strong>清代至近代</strong>：老龙头既是军事要地，也成为帝王将相登临观海的胜地，康熙、乾隆等皇帝曾到此巡游。1900年八国联军侵华时，老龙头遭炮火严重损毁。</li>
+          <li><strong>现代修复</strong>：1984年起，国家对其进行了大规模修复，重建了澄海楼、入海石城等建筑，基本恢复了明清风貌。</li>
+        </ul>
+      </div>
+      
+      <div class="intro-section" id="intro-service">
+        <h3>特色亮点</h3>
+        <ol>
+          <li><strong>长城入海奇观</strong>：老龙头伸入渤海的石城犹如巨龙饮水，海浪拍打城墙的景象震撼壮观，是长城文化与海洋景观的完美结合。</li>
+          <li><strong>澄海楼</strong>：被称为"长城第一楼"，历史上多次重建。登楼可俯瞰渤海，远眺山海关全景，楼内留有历代文人武将的诗文匾额。</li>
+          <li><strong>海神庙与天后宫</strong>：融合了古代航海信仰与民俗文化，展现了中国沿海地区祭祀海神的传统。</li>
+          <li><strong>军事防御体系遗址</strong>：包括明代军营（龙武营）、城墙敌台、铁炮等实物，生动再现古代海防布局。</li>
+          <li><strong>爱国主义教育展馆</strong>：通过史料展示近代抗击外敌的历史，如八国联军入侵等事件。</li>
+        </ol>
+      </div>
+      
+      <div class="intro-section" id="intro-price">
+        <h3>开放时间与票价</h3>
+        <ul>
+          <li><strong>旺季（5月-10月）</strong>：7:30-18:00</li>
+          <li><strong>淡季（11月-次年4月）</strong>：8:00-17:30</li>
+          <li><strong>门票参考</strong>：约50元（旺季可能调整，建议查询官网或旅游平台最新信息）。</li>
+        </ul>
+      </div>
+      
+      <div class="intro-section" id="intro-basic">
+        <h3>基础设施与服务</h3>
+        <ol>
+          <li><strong>交通便利</strong>
+            <ul>
+              <li>秦皇岛火车站乘公交25路、35路可直达。</li>
+              <li>景区周边设有停车场，适合自驾游。</li>
+            </ul>
+          </li>
+          <li><strong>导览服务</strong>
+            <ul>
+              <li>提供语音导览、讲解员服务及清晰的指示牌。</li>
+            </ul>
+          </li>
+          <li><strong>便民设施</strong>
+            <ul>
+              <li>游客中心、纪念品商店、餐饮区（可品尝当地海鲜、饽椤饼等小吃）。</li>
+              <li>无障碍通道覆盖主要区域，适合老年及残障游客。</li>
+            </ul>
+          </li>
+          <li><strong>周边联动</strong>
+            <ul>
+              <li>可与山海关古城、天下第一关、孟姜女庙等景点串联游览。</li>
+            </ul>
+          </li>
+        </ol>
+      </div>
+      
+      <div class="intro-section" id="intro-tips">
+        <h3>旅游贴士</h3>
+        <ul>
+          <li>最佳游览季节为春夏季，可同时享受海滨风光。</li>
+          <li>建议预留2-3小时游览，登澄海楼观日出或日落尤为推荐。</li>
+          <li>景区内海风较大，需注意防风保暖。</li>
+        </ul>
+      </div>
+      
+    </div>
+  </section>
+
+  <!-- ================= 智能地图 ================= -->
+  <section id="map-section">
+    <h2 class="section-title">智能地图（实时定位）</h2>
+    <div id="map"></div>
+  </section>
+
+  <!-- ================= 景点介绍 ================= -->
+  <section id="spots">
+    <h2 class="section-title">景点介绍</h2>
+    <div class="spot-grid">
+
+      <div class="spot-card">
+        <img src="https://raw.githubusercontent.com/delete-yuan/delete-yuan.github.io/main/867896311030ecf61ffbfad2ea385cd5.jpg" alt="澄海楼" loading="lazy" />
+        <div class="spot-name">澄海楼</div>
+        <div class="spot-desc">澄海楼，这座位于山海关老龙头长城尽头的城楼，明末筑起，是万里长城东端的第一个城楼，同时也是老龙头景区的璀璨明珠。这座楼肩上担负着历史的厚重，悬挂在楼上的"雄襟万里"匾额，正是明代大学士孙承宗的亲笔题字。时光荏苒，历史的长河中，澄海楼历经风雨，但始终屹立不倒。现存的是经过1985年至1987年的修复后的建筑，二层的大木结构，重檐九脊歇山瓦顶，高14.5米，面宽15.68米，进深12米。</div>
+      </div>
+
+      <div class="spot-card">
+        <img src="https://raw.githubusercontent.com/delete-yuan/delete-yuan.github.io/main/b.png" alt="宁海城" loading="lazy" />
+        <div class="spot-name">宁海城</div>
+        <div class="spot-desc">宁海城，位于秦皇岛市山海关区龙海大道1号老龙头景区内澄海楼后。宁海城在入海石城北，这座城池是山海关老龙头军事防御体系的重要组成部分，见证了中国古代的战争历史，是我国现存较完整、规模较宏大的明代军营。梯形总长约899米。其右建有"把总署"，其左建有"龙武营"房。还有祭祀先驱将领的显功祠，和请神仙护佑的龙王庙和关帝庙。</div>
+      </div>
+
+      <div class="spot-card">
+        <img src="https://raw.githubusercontent.com/delete-yuan/delete-yuan.github.io/main/ting.jpg" alt="乾隆御碑亭" loading="lazy" />
+        <div class="spot-name">乾隆御碑亭</div>
+        <div class="spot-desc">乾隆御碑亭，乃清代乾隆十九年山海关知县钟和梅所建，为重檐四角亭，气韵独特。曾四次莅临老龙头的乾隆帝，登楼赋诗，御碑所刻的乾隆题诗是乾隆八年到十九年所题的三首长诗，如明珠般镶嵌于亭中，熠熠生辉。</div>
+      </div>
+  
+      <div class="spot-card">
+        <img src="https://raw.githubusercontent.com/delete-yuan/delete-yuan.github.io/main/a.png" alt="守备署" loading="lazy" />
+        <div class="spot-name">守备署</div>
+        <div class="spot-desc">老龙头守备署建于明朝，是明代万里长城"首关"山海关的军事指挥核心之一。守备署内部布局严谨，包括军营、办公厅、兵器库及民防设施。守备署的建立反映了明代沿海防御体系的完善，以及当时北方关隘防务的重要性。</div>
+      </div>
+
+      <div class="spot-card">
+        <img src="https://raw.githubusercontent.com/delete-yuan/delete-yuan.github.io/main/646b613a9e88b1205194d86b39dac11c.jpg" alt="八卦阵" loading="lazy" />
+        <div class="spot-name">八卦阵</div>
+        <div class="spot-desc">八卦阵位于山海关老龙头景区的中心区域，是依据《周易》八卦原理布设的迷阵景点。阵内道路环绕交织，步移景异，体验"入阵如迷、出阵如悟"的趣味。适合游客在游览中体验中国古代兵家布阵智慧。</div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<!-- 返回顶部按钮 -->
+<button class="back-to-top" id="backToTop" aria-label="返回顶部">↑</button>
+
+<footer>
+  <p>© 2023 智慧文旅 · 老龙头景区游客引导系统</p>
+  <p>本系统仅供学习交流使用</p>
+</footer>
+
+<script>
+// ================= 百度地图初始化 =================
+// 创建地图实例
+var map = new BMap.Map("map");
+
+// 老龙头景区坐标
+var point = new BMap.Point(119.805, 39.978);
+map.centerAndZoom(point, 15);
+
+// 添加基本控件（在手机上简化控件）
+map.addControl(new BMap.NavigationControl({anchor: BMAP_ANCHOR_TOP_LEFT, type: BMAP_NAVIGATION_CONTROL_SMALL}));
+map.addControl(new BMap.ScaleControl({anchor: BMAP_ANCHOR_BOTTOM_LEFT}));
+
+// ================= 实时定位功能 =================
+// 存储当前用户标记
+var userMarker = null;
+var watchPositionId = null;
+var isLocating = false;
+
+// 更新用户位置状态显示
+function updateLocationStatus(text, isError = false) {
+  let statusEl = document.getElementById('location-status');
+  if (!statusEl) {
+    statusEl = document.createElement('div');
+    statusEl.id = 'location-status';
+    statusEl.className = 'location-status';
+    document.getElementById('map').appendChild(statusEl);
+  }
+  
+  statusEl.textContent = text;
+  statusEl.style.color = isError ? '#e74c3c' : '#27ae60';
+  statusEl.style.backgroundColor = isError ? 'rgba(231, 76, 60, 0.1)' : 'rgba(39, 174, 96, 0.1)';
+  
+  // 5秒后自动淡出状态信息（除非是错误信息）
+  if (!isError && text !== "正在定位中..." && !text.includes("失败")) {
+    setTimeout(() => {
+      if (statusEl.textContent === text) {
+        statusEl.style.opacity = '0.7';
+      }
+    }, 5000);
+  }
+}
+
+// 更新用户位置标记
+function updateUserPosition(lng, lat, accuracy) {
+  // 将GPS坐标转换为百度坐标
+  var point = new BMap.Point(lng, lat);
+  
+  // 移除旧的标记
+  if (userMarker) {
+    map.removeOverlay(userMarker);
+  }
+  
+  // 创建新标记
+  userMarker = new BMap.Marker(point);
+  
+  // 设置标记图标（蓝色定位图标）
+  var icon = new BMap.Icon(
+    'http://api.map.baidu.com/img/markers.png',
+    new BMap.Size(23, 25),
+    {
+      offset: new BMap.Size(10, 25),
+      imageOffset: new BMap.Size(0, 0)
+    }
+  );
+  userMarker.setIcon(icon);
+  
+  // 添加标记到地图
+  map.addOverlay(userMarker);
+  
+  // 创建信息窗口
+  var infoWindow = new BMap.InfoWindow(
+    `<div style="font-size:14px;padding:8px;">
+      <strong>您的位置</strong><br>
+      经度: ${lng.toFixed(6)}<br>
+      纬度: ${lat.toFixed(6)}<br>
+      ${accuracy ? `精度: ±${accuracy.toFixed(1)}米` : ''}
+    </div>`,
+    {width: 200, height: 120}
+  );
+  
+  // 点击标记显示信息窗口
+  userMarker.addEventListener("click", function() {
+    this.openInfoWindow(infoWindow);
+  });
+  
+  // 更新状态显示
+  updateLocationStatus(`定位成功 - 精度: ±${accuracy ? accuracy.toFixed(1) : '未知'}米`);
+  
+  // 将地图中心移动到当前位置（第一次定位时）
+  if (!window.initialPositionSet) {
+    map.panTo(point);
+    map.setZoom(16); // 放大地图
+    window.initialPositionSet = true;
+  }
+  
+  console.log("位置更新：纬度=" + lat + ", 经度=" + lng);
+}
+
+// 开始定位
+function startLocation() {
+  if (isLocating) return;
+  
+  if (!navigator.geolocation) {
+    updateLocationStatus("浏览器不支持地理定位功能", true);
+    alert("您的浏览器不支持地理定位功能");
+    return;
+  }
+  
+  isLocating = true;
+  updateLocationStatus("正在定位中...");
+  
+  // 获取当前位置
+  navigator.geolocation.getCurrentPosition(
+    function(position) {
+      var lat = position.coords.latitude;
+      var lng = position.coords.longitude;
+      var accuracy = position.coords.accuracy;
+      
+      // 将GPS坐标转换为百度坐标
+      var convertor = new BMap.Convertor();
+      var pointArr = [new BMap.Point(lng, lat)];
+      
+      convertor.translate(pointArr, 1, 5, function(data) {
+        if (data.status === 0) {
+          var point = data.points[0];
+          updateUserPosition(point.lng, point.lat, accuracy);
+        } else {
+          // 转换失败，使用原始坐标
+          updateUserPosition(lng, lat, accuracy);
+        }
+        isLocating = false;
+      });
+    },
+    function(error) {
+      var errorMessage = "定位失败: ";
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage += "请允许浏览器获取位置权限";
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage += "位置信息不可用";
+          break;
+        case error.TIMEOUT:
+          errorMessage += "请求超时，请重试";
+          break;
+        default:
+          errorMessage += "未知错误";
+      }
+      updateLocationStatus(errorMessage, true);
+      console.warn(errorMessage, error);
+      isLocating = false;
+      
+      // 显示重新定位按钮
+      document.getElementById('location-btn').innerHTML = '📍';
+      document.getElementById('location-btn').title = '重新定位';
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    }
+  );
+}
+
+// 添加自定义定位按钮
+function addCustomLocationButton() {
+  var locationBtn = document.createElement('button');
+  locationBtn.id = 'location-btn';
+  locationBtn.className = 'custom-location-btn';
+  locationBtn.innerHTML = '📍';
+  locationBtn.title = '定位到我的位置';
+  locationBtn.onclick = startLocation;
+  
+  document.getElementById('map').appendChild(locationBtn);
+}
+
+// 页面加载完成后初始化
+window.addEventListener('load', function() {
+  // 添加自定义定位按钮
+  addCustomLocationButton();
+  
+  // 延迟一点开始定位，确保地图已加载
+  setTimeout(startLocation, 800);
+  
+  // 初始化返回顶部按钮
+  initBackToTop();
+});
+
+// 返回顶部功能
+function initBackToTop() {
+  var backToTopBtn = document.getElementById('backToTop');
+  var isMobile = window.innerWidth <= 768;
+  
+  window.addEventListener('scroll', function() {
+    if (window.pageYOffset > 300) {
+      backToTopBtn.style.display = 'flex';
+    } else {
+      backToTopBtn.style.display = 'none';
+    }
+  });
+  
+  backToTopBtn.addEventListener('click', function() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  });
+  
+  // 手机触摸优化
+  if (isMobile) {
+    backToTopBtn.addEventListener('touchstart', function() {
+      this.style.transform = 'scale(0.95)';
+    });
+    
+    backToTopBtn.addEventListener('touchend', function() {
+      this.style.transform = '';
+    });
+  }
+}
+
+// 导航栏平滑滚动
+document.querySelectorAll('nav a, .dropdown-content a').forEach(anchor => {
+  anchor.addEventListener('click', function(e) {
+    const href = this.getAttribute('href');
+    
+    // 如果是内部锚点链接
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.substring(1);
+      const targetElement = document.getElementById(targetId);
+      
+      if (targetElement) {
+        // 计算偏移量（考虑固定导航栏的高度）
+        const navHeight = document.querySelector('nav').offsetHeight;
+        const headerHeight = document.querySelector('header').offsetHeight;
+        const offset = navHeight + headerHeight + 10;
+        
+        const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+        
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+        
+        // 关闭下拉菜单（如果是下拉菜单中的链接）
+        if (this.closest('.dropdown-content')) {
+          this.closest('.dropdown-content').style.display = 'none';
+        }
+      }
+    }
+  });
+});
+
+// 下拉菜单触摸优化
+document.querySelectorAll('.dropdown').forEach(dropdown => {
+  const btn = dropdown.querySelector('.dropdown-btn');
+  const menu = dropdown.querySelector('.dropdown-content');
+  
+  if (btn && menu) {
+    // 触摸设备优化
+    if ('ontouchstart' in window) {
+      let tapTimer;
+      let tapped = false;
+      
+      btn.addEventListener('touchstart', function(e) {
+        e.stopPropagation();
+        tapped = true;
+        tapTimer = setTimeout(() => {
+          tapped = false;
+        }, 300);
+      });
+      
+      btn.addEventListener('touchend', function(e) {
+        clearTimeout(tapTimer);
+        if (tapped) {
+          e.preventDefault();
+          // 切换菜单显示
+          const isVisible = menu.style.display === 'block';
+          document.querySelectorAll('.dropdown-content').forEach(otherMenu => {
+            if (otherMenu !== menu) {
+              otherMenu.style.display = 'none';
+            }
+          });
+          menu.style.display = isVisible ? 'none' : 'block';
+        }
+        tapped = false;
+      });
+    } else {
+      // 鼠标设备
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const isVisible = menu.style.display === 'block';
+        document.querySelectorAll('.dropdown-content').forEach(otherMenu => {
+          if (otherMenu !== menu) {
+            otherMenu.style.display = 'none';
+          }
+        });
+        menu.style.display = isVisible ? 'none' : 'block';
+      });
+    }
+  }
+});
+
+// 点击页面其他地方关闭下拉菜单
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.dropdown')) {
+    document.querySelectorAll('.dropdown-content').forEach(menu => {
+      menu.style.display = 'none';
+    });
+  }
+});
+
+// 触摸事件：点击页面其他地方关闭下拉菜单
+document.addEventListener('touchstart', function(e) {
+  if (!e.target.closest('.dropdown')) {
+    document.querySelectorAll('.dropdown-content').forEach(menu => {
+      menu.style.display = 'none';
+    });
+  }
+});
+
+// 响应式调整
+function handleResize() {
+  const isMobile = window.innerWidth <= 768;
+  
+  // 根据设备类型调整地图缩放级别
+  if (isMobile) {
+    map.setZoom(15);
+  } else {
+    map.setZoom(16);
+  }
+}
+
+window.addEventListener('resize', handleResize);
+</script>
+
+</body>
+</html>
+
